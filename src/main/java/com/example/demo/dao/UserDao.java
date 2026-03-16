@@ -38,9 +38,8 @@ public class UserDao {
         return user;
     }
 
-    public boolean deleteById(Long id) {
-        userMapper.deleteById(id);
-        return true;
+    public int deleteById(Long id) {
+        return userMapper.deleteById(id);
     }
 
     public List<User> findByUsername(String username) {

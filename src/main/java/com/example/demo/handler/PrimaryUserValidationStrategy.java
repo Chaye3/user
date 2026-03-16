@@ -1,6 +1,7 @@
 package com.example.demo.handler;
 
 import com.example.demo.dao.UserDao;
+import com.example.demo.exception.UserAlreadyExistsException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,7 +33,7 @@ public class PrimaryUserValidationStrategy implements BusinessValidationStrategy
      */
     private void validateEmailUnique(String email) {
         if (userDao.findByEmail(email) != null) {
-            throw new IllegalStateException("邮箱已被注册：" + email);
+            throw new UserAlreadyExistsException("邮箱已被注册：" + email);
         }
     }
 

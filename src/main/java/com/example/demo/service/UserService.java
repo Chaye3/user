@@ -4,8 +4,12 @@ import com.example.demo.dao.UserDao;
 import com.example.demo.entity.User;
 import com.example.demo.handler.UserCreateHandlerChain;
 import org.springframework.stereotype.Service;
+import com.example.demo.exception.UserNotFoundException;
+import com.example.demo.exception.UserAlreadyExistsException;
+
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 用户服务层
@@ -32,7 +36,8 @@ public class UserService {
      * 根据ID查询用户
      */
     public User getUserById(Long id) {
-        return userDao.findById(id);
+        return Optional.ofNullable(userDao.findById(id))
+                .orElseThrow(() -> new UserNotFoundException("用户未找到，ID：" + id));
     }
 
     /**
@@ -48,7 +53,7 @@ public class UserService {
     public User updateUser(Long id, String username, String email, Integer age) {
         User user = userDao.findById(id);
         if (user == null) {
-            throw new IllegalArgumentException("用户不存在，ID：" + id);
+            throw new UserNotFoundException("用户不存在，ID：" + id);
         }
         user.setUsername(username);
         user.setEmail(email);
@@ -60,7 +65,11 @@ public class UserService {
      * 删除用户
      */
     public boolean deleteUser(Long id) {
-        return userDao.deleteById(id);
+        int affectedRows = userDao.deleteById(id);
+        if (affectedRows == 0) {
+            throw new UserNotFoundException("用户不存在，ID：" + id);
+        }
+        return true;
     }
 
     /**
