@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.dao.JsonFileUserDao;
+import com.example.demo.dao.UserDao;
 import com.example.demo.entity.User;
 import com.example.demo.handler.UserCreateHandlerChain;
 import org.springframework.stereotype.Service;
@@ -8,15 +8,15 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 用户服务层 - 基于文件存储（无第三方依赖）
+ * 用户服务层
  */
 @Service
-public class SimpleFileUserService {
+public class UserService {
 
-    private final JsonFileUserDao userDao;
+    private final UserDao userDao;
     private final UserCreateHandlerChain handlerChain;
 
-    public SimpleFileUserService(JsonFileUserDao userDao, UserCreateHandlerChain handlerChain) {
+    public UserService(UserDao userDao, UserCreateHandlerChain handlerChain) {
         this.userDao = userDao;
         this.handlerChain = handlerChain;
     }
@@ -32,7 +32,6 @@ public class SimpleFileUserService {
      * 根据ID查询用户
      */
     public User getUserById(Long id) {
-        userDao.reload();
         return userDao.findById(id);
     }
 
@@ -40,7 +39,6 @@ public class SimpleFileUserService {
      * 查询所有用户
      */
     public List<User> getAllUsers() {
-        userDao.reload();
         return userDao.findAll();
     }
 
@@ -69,7 +67,6 @@ public class SimpleFileUserService {
      * 根据用户名搜索用户
      */
     public List<User> searchUsers(String username) {
-        userDao.reload();
         return userDao.findByUsername(username);
     }
 
@@ -77,7 +74,6 @@ public class SimpleFileUserService {
      * 获取用户总数
      */
     public long getUserCount() {
-        userDao.reload();
         return userDao.count();
     }
 
@@ -93,22 +89,5 @@ public class SimpleFileUserService {
      */
     public void deleteAllUsers() {
         userDao.deleteAll();
-    }
-
-    /**
-     * 重新加载数据
-     */
-    public void reloadData() {
-        userDao.reload();
-    }
-
-    /**
-     * 获取存储信息
-     */
-    public String getStorageInfo() {
-        userDao.reload();
-        long fileSize = userDao.getDataFileSize();
-        int backupCount = userDao.getBackupCount();
-        return String.format("数据文件大小: %d 字节, 备份文件数量: %d", fileSize, backupCount);
     }
 }

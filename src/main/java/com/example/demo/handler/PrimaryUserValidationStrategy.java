@@ -1,6 +1,6 @@
 package com.example.demo.handler;
 
-import com.example.demo.dao.JsonFileUserDao;
+import com.example.demo.dao.UserDao;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class PrimaryUserValidationStrategy implements BusinessValidationStrategy {
 
-    private final JsonFileUserDao userDao;
+    private final UserDao userDao;
 
-    public PrimaryUserValidationStrategy(JsonFileUserDao userDao) {
+    public PrimaryUserValidationStrategy(UserDao userDao) {
         this.userDao = userDao;
     }
 
@@ -31,7 +31,6 @@ public class PrimaryUserValidationStrategy implements BusinessValidationStrategy
      * 验证邮箱唯一性
      */
     private void validateEmailUnique(String email) {
-        userDao.reload();
         if (userDao.findByEmail(email) != null) {
             throw new IllegalStateException("邮箱已被注册：" + email);
         }
@@ -41,7 +40,6 @@ public class PrimaryUserValidationStrategy implements BusinessValidationStrategy
      * 验证用户数量限制
      */
     private void validateUserCountLimit() {
-        userDao.reload();
         long userCount = userDao.count();
         if (userCount >= 1000) {
             throw new IllegalStateException("用户数量已达上限，暂时无法注册新用户");

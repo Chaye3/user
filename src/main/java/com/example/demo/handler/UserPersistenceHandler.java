@@ -1,6 +1,6 @@
 package com.example.demo.handler;
 
-import com.example.demo.dao.JsonFileUserDao;
+import com.example.demo.dao.UserDao;
 import com.example.demo.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserPersistenceHandler implements UserCreateHandler {
 
-    private final JsonFileUserDao userDao;
+    private final UserDao userDao;
 
-    public UserPersistenceHandler(JsonFileUserDao userDao) {
+    public UserPersistenceHandler(UserDao userDao) {
         this.userDao = userDao;
     }
 
