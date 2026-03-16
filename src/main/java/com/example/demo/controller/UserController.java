@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.User;
-import com.example.demo.service.SimpleFileUserService;
+import com.example.demo.entity.UserReqDTO;
+import com.example.demo.entity.UserRspDTO;
+import com.example.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +19,10 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/users")
-public class UserControllerSpring {
+public class UserController {
 
     @Autowired
-    private SimpleFileUserService userService;
+    private UserService userService;
 
     /**
      * 获取所有用户
@@ -29,7 +31,8 @@ public class UserControllerSpring {
     @GetMapping("/getAllUsers")
     public ResponseEntity<Map<String, Object>> getAllUsers() {
         List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(successResponse("获取用户列表成功", users));
+        List<UserRspDTO> rspList = users.stream().map(this::toRspDTO).toList();
+        return ResponseEntity.ok(successResponse("获取用户列表成功", rspList));
     }
 
     /**
@@ -43,7 +46,7 @@ public class UserControllerSpring {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(errorResponse("用户不存在，ID：" + id));
         }
-        return ResponseEntity.ok(successResponse("获取用户成功", user));
+        return ResponseEntity.ok(successResponse("获取用户成功", toRspDTO(user)));
     }
 
     /**
@@ -51,14 +54,11 @@ public class UserControllerSpring {
      * POST /api/users
      */
     @PostMapping("/createUser")
-    public ResponseEntity<Map<String, Object>> createUser(
-            @RequestParam String username,
-            @RequestParam String email,
-            @RequestParam Integer age) {
+    public ResponseEntity<Map<String, Object>> createUser(@RequestBody UserReqDTO request) {
         try {
-            User user = userService.createUser(username, email, age);
+            User user = userService.createUser(request.getUsername(), request.getEmail(), request.getAge());
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(successResponse("创建用户成功", user));
+                    .body(successResponse("创建用户成功", toRspDTO(user)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(errorResponse(e.getMessage()));
@@ -70,14 +70,10 @@ public class UserControllerSpring {
      * PUT /api/users/{id}
      */
     @PostMapping("/updateUser")
-    public ResponseEntity<Map<String, Object>> updateUser(
-            @RequestParam(required = false) Long id,
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) Integer age) {
+    public ResponseEntity<Map<String, Object>> updateUser(@RequestBody UserReqDTO request) {
         try {
-            User user = userService.updateUser(id, username, email, age);
-            return ResponseEntity.ok(successResponse("更新用户成功", user));
+            User user = userService.updateUser(request.getId(), request.getUsername(), request.getEmail(), request.getAge());
+            return ResponseEntity.ok(successResponse("更新用户成功", toRspDTO(user)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(errorResponse(e.getMessage()));
@@ -88,8 +84,8 @@ public class UserControllerSpring {
      * 删除用户
      * DELETE /api/users/{id}
      */
-    @PostMapping("/deleteUser")
-    public ResponseEntity<Map<String, Object>> deleteUser(@RequestParam(required = false) Long id) {
+    @PostMapping("/deleteUser/{id}")
+    public ResponseEntity<Map<String, Object>> deleteUser(@PathVariable Long id) {
         boolean deleted = userService.deleteUser(id);
         if (deleted) {
             return ResponseEntity.ok(successResponse("删除用户成功",
@@ -107,45 +103,10 @@ public class UserControllerSpring {
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchUsers(@RequestParam String q) {
         List<User> users = userService.searchUsers(q);
-        return ResponseEntity.ok(successResponse("搜索成功，找到 " + users.size() + " 条记录", users));
+        List<UserRspDTO> rspList = users.stream().map(this::toRspDTO).toList();
+        return ResponseEntity.ok(successResponse("搜索成功，找到 " + rspList.size() + " 条记录", rspList));
     }
 
-    /**
-     * 获取用户统计信息
-     * GET /api/users/stats
-     */
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getUserStats() {
-        long totalCount = userService.getUserCount();
-        List<User> allUsers = userService.getAllUsers();
-
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalCount", totalCount);
-        stats.put("storageInfo", userService.getStorageInfo());
-
-        // 年龄统计
-        if (!allUsers.isEmpty()) {
-            double avgAge = allUsers.stream()
-                    .mapToInt(User::getAge)
-                    .average()
-                    .orElse(0);
-            stats.put("averageAge", String.format("%.1f", avgAge));
-
-            int minAge = allUsers.stream()
-                    .mapToInt(User::getAge)
-                    .min()
-                    .orElse(0);
-            stats.put("minAge", minAge);
-
-            int maxAge = allUsers.stream()
-                    .mapToInt(User::getAge)
-                    .max()
-                    .orElse(0);
-            stats.put("maxAge", maxAge);
-        }
-
-        return ResponseEntity.ok(successResponse("获取统计信息成功", stats));
-    }
 
     /**
      * 批量创建用户
@@ -155,8 +116,9 @@ public class UserControllerSpring {
     public ResponseEntity<Map<String, Object>> batchCreateUsers(@RequestBody List<User> users) {
         try {
             List<User> createdUsers = userService.createUsers(users);
+            List<UserRspDTO> rspList = createdUsers.stream().map(this::toRspDTO).toList();
             return ResponseEntity.ok(successResponse(
-                    "批量创建成功，共 " + createdUsers.size() + " 条记录", createdUsers));
+                    "批量创建成功，共 " + rspList.size() + " 条记录", rspList));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(errorResponse(e.getMessage()));
@@ -198,21 +160,15 @@ public class UserControllerSpring {
         return ResponseEntity.ok(successResponse("批量删除完成", result));
     }
 
-    /**
-     * 重新加载数据
-     * POST /api/users/reload
-     */
-    @PostMapping("/reload")
-    public ResponseEntity<Map<String, Object>> reloadData() {
-        userService.reloadData();
-        long count = userService.getUserCount();
-        return ResponseEntity.ok(successResponse("数据重新加载成功，共 " + count + " 条记录",
-                Map.of("userCount", count, "storageInfo", userService.getStorageInfo())));
-    }
 
-    /**
-     * 构建成功响应
-     */
+    private UserRspDTO toRspDTO(User user) {
+        UserRspDTO dto = new UserRspDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setAge(user.getAge());
+        return dto;
+    }
     private Map<String, Object> successResponse(String message, Object data) {
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
