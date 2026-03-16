@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile)",
+      "Bash(./mvnw compile 2>/dev/null || mvn compile 2>/dev/null || echo \"Maven not found, checking Java...\")",
+      "Bash(java -version)"
+    ]
+  }
+}
