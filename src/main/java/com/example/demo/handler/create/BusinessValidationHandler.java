@@ -1,10 +1,14 @@
-package com.example.demo.handler;
+package com.example.demo.handler.create;
 
+import com.example.demo.context.UserCreateContext;
+import com.example.demo.enums.UserType;
+import com.example.demo.handler.strategy.BusinessValidationStrategy;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 业务逻辑校验处理器 - 使用策略模式验证用户创建的业务规则
@@ -14,11 +18,10 @@ public class BusinessValidationHandler implements UserCreateHandler {
 
     private final Map<UserType, BusinessValidationStrategy> strategyMap;
 
+    @Autowired
     public BusinessValidationHandler(List<BusinessValidationStrategy> strategies) {
-        this.strategyMap = new HashMap<>();
-        for (BusinessValidationStrategy strategy : strategies) {
-            strategyMap.put(strategy.getBusinessKey(), strategy);
-        }
+        this.strategyMap = strategies.stream()
+                .collect(Collectors.toMap(BusinessValidationStrategy::getBusinessKey, strategy -> strategy));
     }
 
     @Override

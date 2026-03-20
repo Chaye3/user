@@ -1,6 +1,7 @@
 package com.example.demo.dao;
 
-import com.example.demo.entity.User;
+import com.example.demo.dos.UserDO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -9,13 +10,10 @@ import java.util.List;
 @Repository
 public class UserDao {
 
-    private final UserMapper userMapper;
+    @Autowired
+    private UserMapper userMapper;
 
-    public UserDao(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-
-    public User save(User user) {
+    public UserDO save(UserDO user) {
         if (user.getCreateTime() == null) {
             user.setCreateTime(LocalDateTime.now());
         }
@@ -24,15 +22,15 @@ public class UserDao {
         return user;
     }
 
-    public User findById(Long id) {
+    public UserDO findById(Long id) {
         return userMapper.findById(id);
     }
 
-    public List<User> findAll() {
+    public List<UserDO> findAll() {
         return userMapper.findAll();
     }
 
-    public User update(User user) {
+    public UserDO update(UserDO user) {
         user.setUpdateTime(LocalDateTime.now());
         userMapper.update(user);
         return user;
@@ -42,11 +40,11 @@ public class UserDao {
         return userMapper.deleteById(id);
     }
 
-    public List<User> findByUsername(String username) {
+    public List<UserDO> findByUsername(String username) {
         return userMapper.findByUsername(username);
     }
 
-    public User findByEmail(String email) {
+    public UserDO findByEmail(String email) {
         return userMapper.findByEmail(email);
     }
 
@@ -58,8 +56,8 @@ public class UserDao {
         return userMapper.findById(id) != null;
     }
 
-    public List<User> saveAll(List<User> users) {
-        for (User user : users) {
+    public List<UserDO> saveAll(List<UserDO> users) {
+        for (UserDO user : users) {
             if (user.getCreateTime() == null) {
                 user.setCreateTime(LocalDateTime.now());
             }

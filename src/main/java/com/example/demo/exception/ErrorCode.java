@@ -10,8 +10,8 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(500, "Internal Server Error"),
 
     // Business-specific errors
-    USER_NOT_FOUND(404, "User not found"),
-    USER_ALREADY_EXISTS(409, "User with this username or email already exists"),
+    USER_NOT_FOUND(404, "UserDO not found"),
+    USER_ALREADY_EXISTS(409, "UserDO with this username or email already exists"),
     VALIDATION_ERROR(400, "Validation Failed");
 
     private final int status;

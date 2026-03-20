@@ -1,18 +1,20 @@
-package com.example.demo.handler;
+package com.example.demo.context;
 
-import com.example.demo.entity.User;
+import com.example.demo.dos.UserDO;
+import com.example.demo.enums.UserType;
+import com.example.demo.handler.auth.context.BaseContext;
 
 /**
  * 用户创建上下文 - 用于在处理器链中传递数据
  */
-public class UserCreateContext {
+public class UserCreateContext extends BaseContext {
 
     private String username;
-    private String email;
     private Integer age;
     private UserType userType;
 
-    private User resultUser;
+    private UserDO resultUser;
+    private UserDO pendingUser;
 
     public UserCreateContext(String username, String email, Integer age) {
         this(username, email, age, UserType.PRIMARY);
@@ -20,7 +22,7 @@ public class UserCreateContext {
 
     public UserCreateContext(String username, String email, Integer age, UserType userType) {
         this.username = username;
-        this.email = email;
+        this.setEmail(email);
         this.age = age;
         this.userType = userType;
     }
@@ -31,14 +33,6 @@ public class UserCreateContext {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public Integer getAge() {
@@ -57,11 +51,19 @@ public class UserCreateContext {
         this.userType = userType;
     }
 
-    public User getResultUser() {
+    public UserDO getResultUser() {
         return resultUser;
     }
 
-    public void setResultUser(User resultUser) {
+    public void setResultUser(UserDO resultUser) {
         this.resultUser = resultUser;
+    }
+
+    public UserDO getPendingUser() {
+        return pendingUser;
+    }
+
+    public void setPendingUser(UserDO pendingUser) {
+        this.pendingUser = pendingUser;
     }
 }

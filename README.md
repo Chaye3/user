@@ -1,50 +1,29 @@
 # 用户管理系统
 
-基于 Spring Boot 和 JSON 文件存储的用户管理系统，演示了多种设计模式的实际应用。
+基于 Spring Boot用户管理系统，演示了多种设计模式的实际应用。
 
 ## 功能特性
 
-- 📁 基于 JSON 文件持久化存储
-- 🔧 Spring Boot 框架集成
+- ⚡ Spring Boot 框架集成
 - 🧩 多种设计模式组合应用
-- ⚡ 责任链模式处理用户创建流程
+- 🔐 统一响应结构封装
+- ⚠️ 全局异常处理机制
+- 📝 DTO 数据传输对象
+- 🔗 责任链模式处理用户创建流程
 - 🎯 策略模式支持不同用户类别
 - 🏗️ 建造者模式优雅创建对象
-- 🔄 自动备份机制
-- 📝 完整的 CRUD 操作
 
-## 技术栈
-
-- Spring Boot 3.x
-- Lombok - 简化实体类
-- 纯 Java 实现，无第三方 JSON 依赖
 
 ## 项目结构
 
 ```
 src/main/java/com/example/demo/
-├── config/
-│   └── JacksonConfig.java              # Jackson 配置
-├── dao/
-│   └── JsonFileUserDao.java           # JSON 文件数据访问层
-├── entity/
-│   └── User.java                      # 用户实体类（含建造者模式）
-├── handler/                           # 处理器层（责任链+策略模式）
-│   ├── UserCreateHandler.java          # 处理器接口
-│   ├── UserCreateContext.java          # 上下文类
-│   ├── UserCreateHandlerChain.java     # 处理器链编排者
-│   ├── ParameterValidationHandler.java   # 参数校验处理器
-│   ├── BusinessValidationHandler.java    # 业务校验处理器
-│   ├── UserPersistenceHandler.java      # 数据持久化处理器
-│   ├── BusinessValidationStrategy.java  # 业务校验策略接口
-│   ├── PrimaryUserValidationStrategy.java   # 主用户校验策略
-│   ├── SecondaryUserValidationStrategy.java  # 从用户校验策略
-│   └── UserType.java                  # 用户类别枚举
-├── controller/
-│   └── UserControllerSpring.java       # 用户控制器
-├── service/
-│   └── SimpleFileUserService.java      # 用户服务层
-└── UserCenterApplication.java          # 启动类
+├── controller/     # 控制层
+├── service/        # 服务层
+├── dao/            # 数据访问层
+├── entity/         # 实体类
+├── handler/        # 处理器（责任链+策略模式）
+└── exception/      # 异常处理
 ```
 
 ## 设计模式应用
@@ -147,33 +126,19 @@ User user2 = User.builder()
 - [ ] 添加单例模式，管理配置和连接池
 
 
-## 数据存储
 
-数据以 JSON 格式存储在 `data/` 目录下：
+## API 接口
 
-```json
-[
-  {
-    "id": 1,
-    "username": "张三",
-    "email": "zhangsan@example.com",
-    "age": 25,
-    "createTime": "2026-03-03 00:00:00",
-    "updateTime": "2026-03-03 00:00:00"
-  }
-]
-```
-
-## 备份机制
-
-系统自动维护备份文件，位于 `data/backup/` 目录：
-- 每次写入数据前自动备份
-- 最多保留 10 个备份文件
-- 备份文件名格式：`users_backup_<timestamp>.json`
-
-```
-
-## 运行项目
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/users/getAllUsers | 获取所有用户 |
+| GET | /api/users/getUserById/{id} | 根据ID获取用户 |
+| POST | /api/users/createUser | 创建用户 |
+| POST | /api/users/updateUser | 更新用户 |
+| POST | /api/users/deleteUser/{id} | 删除用户 |
+| GET | /api/users/search?q=xxx | 搜索用户 |
+| POST | /api/users/batchCreateUsers/batch | 批量创建用户 |
+| POST | /api/users/batchDeleteUsers/batch | 批量删除用户 |
 
 ```bash
 # 编译
@@ -431,12 +396,4 @@ DAO is Idle
    - 保持图表与代码的一致性
    - 定期审查和更新过时图表
 
-
-## 注意事项
-
-1. JSON 文件读写使用线程安全机制
-2. 数据修改时自动触发备份
-3. 参数校验分为格式校验和业务规则校验
-4. 主用户和从用户有不同的业务规则
-5. 建造者模式会自动校验必填字段
-
+   

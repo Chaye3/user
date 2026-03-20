@@ -1,7 +1,10 @@
-package com.example.demo.handler;
+package com.example.demo.handler.strategy;
 
+import com.example.demo.context.UserCreateContext;
 import com.example.demo.dao.UserDao;
+import com.example.demo.enums.UserType;
 import com.example.demo.exception.UserAlreadyExistsException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,11 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PrimaryUserValidationStrategy implements BusinessValidationStrategy {
 
-    private final UserDao userDao;
-
-    public PrimaryUserValidationStrategy(UserDao userDao) {
-        this.userDao = userDao;
-    }
+    @Autowired
+    private UserDao userDao;
 
     @Override
     public void validate(UserCreateContext context) {

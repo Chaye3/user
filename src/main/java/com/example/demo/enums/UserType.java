@@ -1,4 +1,4 @@
-package com.example.demo.handler;
+package com.example.demo.enums;
 
 import java.util.Arrays;
 

@@ -1,30 +1,32 @@
-package com.example.demo.entity;
+package com.example.demo.dos;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * User实体类
+ * UserDO实体类
  */
 @Data
-public class User {
+public class UserDO {
     private Long id;
     private String username;
     private String email;
+    private String password;
     private Integer age;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
-    public User() {
+    public UserDO() {
         this.createTime = LocalDateTime.now();
         this.updateTime = LocalDateTime.now();
     }
 
-    public User(String username, String email, Integer age) {
+    public UserDO(String username, String email, String password, Integer age) {
         this();
         this.username = username;
         this.email = email;
+        this.password = password;
         this.age = age;
     }
 
@@ -35,6 +37,7 @@ public class User {
     public static class Builder {
         private String username;
         private String email;
+        private String password;
         private Integer age;
 
         public Builder username(String username) {
@@ -52,7 +55,12 @@ public class User {
             return this;
         }
 
-        public User build() {
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public UserDO build() {
             if (username == null || username.trim().isEmpty()) {
                 throw new IllegalArgumentException("用户名不能为空");
             }
@@ -63,7 +71,7 @@ public class User {
                 throw new IllegalArgumentException("年龄不能为空");
             }
 
-            return new User(username, email, age);
+            return new UserDO(username, email, password, age);
         }
     }
 
