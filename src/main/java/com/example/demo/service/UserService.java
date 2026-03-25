@@ -2,10 +2,10 @@ package com.example.demo.service;
 
 import com.example.demo.biz.UserAuthBiz;
 import com.example.demo.constant.UserAuthConstant;
+import com.example.demo.constant.LockConstant;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
 import com.example.demo.enums.UserType;
-import com.example.demo.handler.auth.shared.EmailLockHandler;
 import com.example.demo.handler.create.BusinessValidationHandler;
 import com.example.demo.handler.create.ParameterValidationHandler;
 import com.example.demo.context.UserCreateContext;
@@ -31,10 +31,10 @@ import java.util.Optional;
  */
 @Service
 public class UserService {
-    
+
     @Autowired
     private UserDao userDao;
-    
+
     @Autowired
     private ParameterValidationHandler parameterValidationHandler;
 
@@ -46,25 +46,22 @@ public class UserService {
 
     @Autowired
     private AuthChainExecutor authChainExecutor;
-    
-    @Autowired
-    private EmailLockHandler emailLockHandler;
 
     @Autowired
     private UserAuthBiz userAuthBiz;
 
     @Autowired
     private RegisterValidationHandler registerValidationHandler;
-    
+
     @Autowired
     private RegisterBizHandler registerBizHandler;
-    
+
     @Autowired
     private RegisterProcessHandler registerProcessHandler;
 
     @Autowired
     private LoginValidationHandler loginValidationHandler;
-    
+
     @Autowired
     private LoginBizHandler loginBizHandler;
 
@@ -80,29 +77,23 @@ public class UserService {
     public String sendRegisterCode(String email) {
         SendCodeContext context = new SendCodeContext();
         context.setEmail(email);
-        
-        // 使用 Lambda 表达式构建责任链，无需创建 Handler 类
-        authChainExecutor.execute(context, List.of(
-            // 步骤1: 获取锁
-            ctx -> ctx.setLock(userAuthBiz.acquireEmailLock(ctx.getEmail())),
-            
-            // 步骤2: 参数验证
+
+        // 使用分布式锁保护责任链执行
+        authChainExecutor.executeWithLock(context, LockConstant.SEND_CODE_EMAIL + email, List.of(
+            // 参数验证
             ctx -> userAuthBiz.validateEmail(ctx.getEmail()),
-            
-            // 步骤3: 生成验证码
+            // 生成验证码
             ctx -> {
                 String code = userAuthBiz.generateVerificationCode();
                 ctx.setMockCode(code);
                 ctx.setCodeExpireAt(System.currentTimeMillis() + UserAuthConstant.REGISTER_CODE_TTL_MILLIS);
             },
-            
-            // 步骤4: 发送邮件
+            // 发送邮件
             ctx -> userAuthBiz.mockSendRegisterMail(ctx.getEmail(), ctx.getMockCode()),
-            
-            // 步骤5: 持久化
+            // 持久化
             ctx -> userAuthBiz.saveRegisterCode(ctx.getEmail(), ctx.getMockCode(), ctx.getCodeExpireAt())
         ));
-        
+
         return context.getMockCode();
     }
 
@@ -116,9 +107,8 @@ public class UserService {
         context.setPassword(password);
         context.setVerificationCode(verificationCode);
 
-        authChainExecutor.execute(context, List.of(
-                // [锁] 基于邮箱的并发锁保护（后期可优化为基于Redisson的分布式锁）
-                emailLockHandler,
+        // 使用分布式锁保护责任链执行
+        authChainExecutor.executeWithLock(context, LockConstant.REGISTER_EMAIL + email, List.of(
                 registerValidationHandler,
                 registerBizHandler,
                 // [事务] 数据持久化入库
@@ -136,8 +126,8 @@ public class UserService {
         context.setEmail(email);
         context.setPassword(password);
 
-        authChainExecutor.execute(context, List.of(
-                emailLockHandler,
+        // 使用分布式锁保护责任链执行
+        authChainExecutor.executeWithLock(context, LockConstant.LOGIN_EMAIL + email, List.of(
                 loginValidationHandler,
                 loginBizHandler
         ));

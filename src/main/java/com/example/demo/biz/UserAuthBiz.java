@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 /**
@@ -19,43 +17,12 @@ import java.util.regex.Pattern;
  */
 @Component
 public class UserAuthBiz {
-    
+
     @Autowired
     private UserDao userDao;
-    
+
     private final Pattern emailPattern = Pattern.compile(UserAuthConstant.EMAIL_PATTERN);
     private final ConcurrentHashMap<String, RegisterCodeInfo> registerCodeStore = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, ReentrantLock> emailLockStore = new ConcurrentHashMap<>();
-
-    /**
-     * 按邮箱获取业务锁，用于注册相关流程的串行化和幂等控制，带超时机制
-     */
-    public ReentrantLock acquireEmailLock(String email) {
-        if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("邮箱不能为空");
-        }
-        ReentrantLock lock = emailLockStore.computeIfAbsent(email, key -> new ReentrantLock());
-        try {
-            // 尝试获取锁，最多等待6秒，避免死锁
-            boolean locked = lock.tryLock(6, TimeUnit.SECONDS);
-            if (!locked) {
-                throw new IllegalStateException("系统繁忙，请稍后再试");
-            }
-            return lock;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("获取锁被中断，请稍后再试", e);
-        }
-    }
-
-    /**
-     * 释放业务锁
-     */
-    public void releaseEmailLock(ReentrantLock lock) {
-        if (lock != null && lock.isHeldByCurrentThread()) {
-            lock.unlock();
-        }
-    }
 
     /**
      * 校验邮箱格式
