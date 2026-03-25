@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.biz.UserAuthBiz;
-import com.example.demo.constant.UserAuthConstant;
 import com.example.demo.constant.LockConstant;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
@@ -75,25 +74,20 @@ public class UserService {
      * 4.状态无依赖：每个步骤都应该只依赖当前锁下面context中的状态，不要出现无锁状态依赖等情况。
      */
     public String sendRegisterCode(String email) {
-        SendCodeContext context = new SendCodeContext();
-        context.setEmail(email);
-
+        SendCodeContext context = new SendCodeContext(email);
         // 使用分布式锁保护责任链执行
+        // [锁开启]
         authChainExecutor.executeWithLock(context, LockConstant.SEND_CODE_EMAIL + email, List.of(
             // 参数验证
-            ctx -> userAuthBiz.validateEmail(ctx.getEmail()),
+            ctx -> userAuthBiz.validateEmail(ctx),
             // 生成验证码
-            ctx -> {
-                String code = userAuthBiz.generateVerificationCode();
-                ctx.setMockCode(code);
-                ctx.setCodeExpireAt(System.currentTimeMillis() + UserAuthConstant.REGISTER_CODE_TTL_MILLIS);
-            },
+            ctx -> userAuthBiz.generateAndSetCode(ctx),
             // 发送邮件
-            ctx -> userAuthBiz.mockSendRegisterMail(ctx.getEmail(), ctx.getMockCode()),
+            ctx -> userAuthBiz.mockSendRegisterMail(ctx),
             // 持久化
-            ctx -> userAuthBiz.saveRegisterCode(ctx.getEmail(), ctx.getMockCode(), ctx.getCodeExpireAt())
+            ctx -> userAuthBiz.saveRegisterCode(ctx)
         ));
-
+        // [锁释放]
         return context.getMockCode();
     }
 
@@ -101,37 +95,33 @@ public class UserService {
      * 邮箱验证码注册 - 对象式责任链，创建多个handler对象去处理不同的业务逻辑
      */
     public UserDO registerByEmail(String username, String email, String password, String verificationCode) {
-        RegisterContext context = new RegisterContext();
-        context.setUsername(username);
-        context.setEmail(email);
-        context.setPassword(password);
-        context.setVerificationCode(verificationCode);
+        RegisterContext context = new RegisterContext(username, email, password, verificationCode);
 
         // 使用分布式锁保护责任链执行
+        // [锁开启]
         authChainExecutor.executeWithLock(context, LockConstant.REGISTER_EMAIL + email, List.of(
                 registerValidationHandler,
                 registerBizHandler,
                 // [事务] 数据持久化入库
                 registerProcessHandler
         ));
-
+        // [锁释放]
         return context.getResultUser();
     }
 
     /**
-     * 邮箱密码登录 - Service 仅做流程编排，具体逻辑在责任链与 Biz 层
+     * 邮箱密码登录 - 对象式责任链，创建多个handler对象去处理不同的业务逻辑
      */
     public UserDO loginByEmail(String email, String password) {
-        LoginContext context = new LoginContext();
-        context.setEmail(email);
-        context.setPassword(password);
+        LoginContext context = new LoginContext(email, password);
 
         // 使用分布式锁保护责任链执行
+        // [锁开启]
         authChainExecutor.executeWithLock(context, LockConstant.LOGIN_EMAIL + email, List.of(
                 loginValidationHandler,
                 loginBizHandler
         ));
-
+        // [锁释放]
         return context.getResultUser();
     }
 

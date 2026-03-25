@@ -12,4 +12,7 @@ public class SendCodeContext extends BaseContext {
     private String mockCode;
     private Long codeExpireAt;
 
+    public SendCodeContext(String email) {
+        this.setEmail(email);
+    }
 }

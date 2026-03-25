@@ -15,4 +15,11 @@ public class RegisterContext extends BaseContext {
     private String verificationCode;
     private UserDO pendingUser;
     private UserDO resultUser;
+
+    public RegisterContext(String username, String email, String password, String verificationCode) {
+        this.username = username;
+        this.setEmail(email);
+        this.password = password;
+        this.verificationCode = verificationCode;
+    }
 }

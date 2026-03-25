@@ -4,6 +4,7 @@ import com.example.demo.constant.UserAuthConstant;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
 import com.example.demo.exception.UserAlreadyExistsException;
+import com.example.demo.handler.auth.context.SendCodeContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,13 @@ public class UserAuthBiz {
         if (!emailPattern.matcher(email.trim()).matches()) {
             throw new IllegalArgumentException("邮箱格式不正确");
         }
+    }
+
+    /**
+     * 校验邮箱格式（基于上下文）
+     */
+    public void validateEmail(SendCodeContext context) {
+        validateEmail(context.getEmail());
     }
 
     /**
@@ -71,6 +79,15 @@ public class UserAuthBiz {
     }
 
     /**
+     * 生成验证码并设置到上下文（包含过期时间）
+     */
+    public void generateAndSetCode(SendCodeContext context) {
+        String code = generateVerificationCode();
+        context.setMockCode(code);
+        context.setCodeExpireAt(System.currentTimeMillis() + UserAuthConstant.REGISTER_CODE_TTL_MILLIS);
+    }
+
+    /**
      * 模拟发送邮件
      */
     public void mockSendRegisterMail(String email, String code) {
@@ -80,10 +97,24 @@ public class UserAuthBiz {
     }
 
     /**
+     * 模拟发送邮件（基于上下文）
+     */
+    public void mockSendRegisterMail(SendCodeContext context) {
+        mockSendRegisterMail(context.getEmail(), context.getMockCode());
+    }
+
+    /**
      * 持久化验证码到内存缓存
      */
     public void saveRegisterCode(String email, String code, long expireAt) {
         registerCodeStore.put(email, new RegisterCodeInfo(code, expireAt));
+    }
+
+    /**
+     * 持久化验证码到内存缓存（基于上下文）
+     */
+    public void saveRegisterCode(SendCodeContext context) {
+        saveRegisterCode(context.getEmail(), context.getMockCode(), context.getCodeExpireAt());
     }
 
     /**
