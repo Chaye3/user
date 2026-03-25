@@ -3,7 +3,7 @@ package com.example.demo.handler.create;
 import com.example.demo.context.UserCreateContext;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
  * 业务保存落库处理器 - 将用户数据持久化到存储
  */
 @Component
+@RequiredArgsConstructor
 public class UserProcessHandler implements UserCreateHandler {
 
-    @Autowired
-    private UserDao userDao;
+    private final UserDao userDao;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)

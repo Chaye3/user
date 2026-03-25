@@ -1,17 +1,17 @@
 package com.example.demo.dao;
 
 import com.example.demo.dos.UserDO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
+@RequiredArgsConstructor
 public class UserDao {
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     public UserDO save(UserDO user) {
         if (user.getCreateTime() == null) {

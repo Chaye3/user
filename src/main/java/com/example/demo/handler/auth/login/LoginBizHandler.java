@@ -4,17 +4,17 @@ import com.example.demo.biz.UserAuthBiz;
 import com.example.demo.dos.UserDO;
 import com.example.demo.handler.auth.AuthHandler;
 import com.example.demo.handler.auth.context.LoginContext;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * 登录步骤：业务校验与计算
  */
 @Component
+@RequiredArgsConstructor
 public class LoginBizHandler implements AuthHandler<LoginContext> {
-    
-    @Autowired
-    private UserAuthBiz userAuthBiz;
+
+    private final UserAuthBiz userAuthBiz;
 
     @Override
     public void handle(LoginContext context) {

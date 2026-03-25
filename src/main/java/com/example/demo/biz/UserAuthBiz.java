@@ -6,7 +6,7 @@ import com.example.demo.dos.UserDO;
 import com.example.demo.exception.UserAlreadyExistsException;
 import com.example.demo.handler.auth.context.RegisterContext;
 import com.example.demo.handler.auth.context.SendCodeContext;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -18,10 +18,10 @@ import java.util.regex.Pattern;
  * 用户认证 Biz 层，负责认证相关的业务计算和业务规则校验
  */
 @Component
+@RequiredArgsConstructor
 public class UserAuthBiz {
 
-    @Autowired
-    private UserDao userDao;
+    private final UserDao userDao;
 
     private final Pattern emailPattern = Pattern.compile(UserAuthConstant.EMAIL_PATTERN);
     private final ConcurrentHashMap<String, RegisterCodeInfo> registerCodeStore = new ConcurrentHashMap<>();

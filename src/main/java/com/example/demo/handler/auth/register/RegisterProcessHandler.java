@@ -5,7 +5,7 @@ import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
 import com.example.demo.handler.auth.AuthHandler;
 import com.example.demo.handler.auth.context.RegisterContext;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +16,11 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * 注册步骤：持久化入库与验证码核销
  */
 @Component
+@RequiredArgsConstructor
 public class RegisterProcessHandler implements AuthHandler<RegisterContext> {
 
-    @Autowired
-    private UserDao userDao;
-
-    @Autowired
-    private UserAuthBiz userAuthBiz;
+    private final UserDao userDao;
+    private final UserAuthBiz userAuthBiz;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)

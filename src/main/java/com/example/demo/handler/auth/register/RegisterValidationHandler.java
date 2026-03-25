@@ -3,17 +3,17 @@ package com.example.demo.handler.auth.register;
 import com.example.demo.biz.UserAuthBiz;
 import com.example.demo.handler.auth.AuthHandler;
 import com.example.demo.handler.auth.context.RegisterContext;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * 注册步骤：参数校验
  */
 @Component
+@RequiredArgsConstructor
 public class RegisterValidationHandler implements AuthHandler<RegisterContext> {
-    
-    @Autowired
-    private UserAuthBiz userAuthBiz;
+
+    private final UserAuthBiz userAuthBiz;
 
     @Override
     public void handle(RegisterContext context) {

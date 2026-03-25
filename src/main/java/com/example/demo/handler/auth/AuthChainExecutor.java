@@ -3,6 +3,7 @@ package com.example.demo.handler.auth;
 import com.example.demo.handler.auth.context.BaseContext;
 import com.example.demo.lock.DistributedLockTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,8 +16,11 @@ import java.util.function.Consumer;
 @Component
 public class AuthChainExecutor {
 
-    @Autowired(required = false)
-    private DistributedLockTemplate distributedLockTemplate;
+    private final DistributedLockTemplate distributedLockTemplate;
+
+    public AuthChainExecutor(@Autowired(required = false) @Nullable DistributedLockTemplate distributedLockTemplate) {
+        this.distributedLockTemplate = distributedLockTemplate;
+    }
 
     /**
      * 普通执行责任链（无锁保护）

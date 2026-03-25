@@ -3,7 +3,6 @@ package com.example.demo.handler.create;
 import com.example.demo.context.UserCreateContext;
 import com.example.demo.enums.UserType;
 import com.example.demo.handler.strategy.BusinessValidationStrategy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,7 +17,6 @@ public class BusinessValidationHandler implements UserCreateHandler {
 
     private final Map<UserType, BusinessValidationStrategy> strategyMap;
 
-    @Autowired
     public BusinessValidationHandler(List<BusinessValidationStrategy> strategies) {
         this.strategyMap = strategies.stream()
                 .collect(Collectors.toMap(BusinessValidationStrategy::getBusinessKey, strategy -> strategy));

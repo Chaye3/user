@@ -3,17 +3,17 @@ package com.example.demo.handler.auth.sendcode;
 import com.example.demo.biz.UserAuthBiz;
 import com.example.demo.handler.auth.AuthHandler;
 import com.example.demo.handler.auth.context.SendCodeContext;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * 发码步骤：参数校验
  */
 @Component
+@RequiredArgsConstructor
 public class SendCodeValidationHandler implements AuthHandler<SendCodeContext> {
-    
-    @Autowired
-    private UserAuthBiz userAuthBiz;
+
+    private final UserAuthBiz userAuthBiz;
 
     @Override
     public void handle(SendCodeContext context) {

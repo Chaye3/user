@@ -7,9 +7,9 @@ import com.example.demo.dto.req.SendCodeParam;
 import com.example.demo.dto.req.UserReqDTO;
 import com.example.demo.dto.rsp.UserRspDTO;
 import com.example.demo.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +24,11 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     /**
      * 获取所有用户

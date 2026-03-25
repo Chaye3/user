@@ -1,8 +1,8 @@
 package com.example.demo.lock;
 
+import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit;
  * </pre>
  */
 @Component
+@RequiredArgsConstructor
 public class RedissonDistributedLockTemplate implements DistributedLockTemplate {
 
-    @Autowired
-    private RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
 
     @Override
     public void executeWithLock(String lockKey, long waitTime, TimeUnit waitUnit,

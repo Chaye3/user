@@ -4,7 +4,7 @@ import com.example.demo.context.UserCreateContext;
 import com.example.demo.dao.UserDao;
 import com.example.demo.enums.UserType;
 import com.example.demo.exception.UserAlreadyExistsException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
  * 从用户权限受限，校验规则更严格
  */
 @Component
+@RequiredArgsConstructor
 public class SecondaryUserValidationStrategy implements BusinessValidationStrategy {
 
-    @Autowired
-    private UserDao userDao;
+    private final UserDao userDao;
 
     @Override
     public void validate(UserCreateContext context) {
