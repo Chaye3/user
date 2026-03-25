@@ -9,16 +9,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 注册步骤：持久化入库与验证码核销
  */
 @Component
 public class RegisterProcessHandler implements AuthHandler<RegisterContext> {
-    
+
     @Autowired
     private UserDao userDao;
-    
+
     @Autowired
     private UserAuthBiz userAuthBiz;
 
@@ -28,13 +30,18 @@ public class RegisterProcessHandler implements AuthHandler<RegisterContext> {
         if (context.getPendingUser() == null) {
             throw new IllegalStateException("待注册用户为空");
         }
-        // 显式落库保存
+
+        // [事务内] 数据库持久化
         UserDO savedUser = userDao.save(context.getPendingUser());
-        
-        // 注册特有的逻辑：核销验证码
-        userAuthBiz.consumeRegisterCode(context.getEmail());
-        
-        // 将结果写回上下文
         context.setResultUser(savedUser);
+
+        // [事务外] 事务提交后核销验证码，避免事务回滚导致验证码丢失
+        String email = context.getEmail();
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                userAuthBiz.consumeRegisterCode(email);
+            }
+        });
     }
 }

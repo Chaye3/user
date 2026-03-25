@@ -4,6 +4,7 @@ import com.example.demo.constant.UserAuthConstant;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
 import com.example.demo.exception.UserAlreadyExistsException;
+import com.example.demo.handler.auth.context.RegisterContext;
 import com.example.demo.handler.auth.context.SendCodeContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,6 +59,23 @@ public class UserAuthBiz {
         if (verificationCode == null || verificationCode.trim().isEmpty()) {
             throw new IllegalArgumentException("验证码不能为空");
         }
+    }
+
+    /**
+     * 校验注册参数（基于上下文）
+     */
+    public void validateRegisterParam(RegisterContext context) {
+        validateRegisterParam(context.getUsername(), context.getEmail(), context.getPassword(), context.getVerificationCode());
+    }
+
+    /**
+     * 处理注册业务逻辑：验证码校验、邮箱唯一性、构建用户对象
+     */
+    public void processRegisterBiz(RegisterContext context) {
+        validateRegisterCode(context.getEmail(), context.getVerificationCode(), System.currentTimeMillis());
+        validateEmailNotRegistered(context.getEmail());
+        UserDO pendingUser = buildRegisterUser(context.getUsername(), context.getEmail(), context.getPassword());
+        context.setPendingUser(pendingUser);
     }
 
     /**

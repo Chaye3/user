@@ -15,9 +15,7 @@ import com.example.demo.handler.auth.context.RegisterContext;
 import com.example.demo.handler.auth.context.SendCodeContext;
 import com.example.demo.handler.auth.login.LoginBizHandler;
 import com.example.demo.handler.auth.login.LoginValidationHandler;
-import com.example.demo.handler.auth.register.RegisterBizHandler;
 import com.example.demo.handler.auth.register.RegisterProcessHandler;
-import com.example.demo.handler.auth.register.RegisterValidationHandler;
 import com.example.demo.exception.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,12 +48,6 @@ public class UserService {
     private UserAuthBiz userAuthBiz;
 
     @Autowired
-    private RegisterValidationHandler registerValidationHandler;
-
-    @Autowired
-    private RegisterBizHandler registerBizHandler;
-
-    @Autowired
     private RegisterProcessHandler registerProcessHandler;
 
     @Autowired
@@ -66,7 +58,7 @@ public class UserService {
 
     /**
      * 发送邮箱验证码 - 函数式责任链，使用 Lambda 表达式代替 Handler类 去处理不同的业务逻辑
-     *
+     * <p>
      * Lambda写法 安全警告：
      * 1.lambda中捕获外部变量问题，会导致并发问题。要谨慎的只使用context中的变量。
      * 2.使用context时的多线程安全问题：不要多个不同方法操作同一个context对象，每个方法都应该new一个新的context对象然后自己操作自己的context对象。
@@ -78,31 +70,31 @@ public class UserService {
         // 使用分布式锁保护责任链执行
         // [锁开启]
         authChainExecutor.executeWithLock(context, LockConstant.SEND_CODE_EMAIL + email, List.of(
-            // 参数验证
-            ctx -> userAuthBiz.validateEmail(ctx),
-            // 生成验证码
-            ctx -> userAuthBiz.generateAndSetCode(ctx),
-            // 发送邮件
-            ctx -> userAuthBiz.mockSendRegisterMail(ctx),
-            // 持久化
-            ctx -> userAuthBiz.saveRegisterCode(ctx)
+                // 参数验证
+                ctx -> userAuthBiz.validateEmail(ctx),
+                // 生成验证码
+                ctx -> userAuthBiz.generateAndSetCode(ctx),
+                // 发送邮件
+                ctx -> userAuthBiz.mockSendRegisterMail(ctx),
+                // 持久化
+                ctx -> userAuthBiz.saveRegisterCode(ctx)
         ));
         // [锁释放]
         return context.getMockCode();
     }
 
     /**
-     * 邮箱验证码注册 - 对象式责任链，创建多个handler对象去处理不同的业务逻辑
+     * 邮箱验证码注册 - 函数式责任链（lambda语法糖：方法引用式写法）+ Handler混合模式
      */
     public UserDO registerByEmail(String username, String email, String password, String verificationCode) {
         RegisterContext context = new RegisterContext(username, email, password, verificationCode);
-
-        // 使用分布式锁保护责任链执行
         // [锁开启]
         authChainExecutor.executeWithLock(context, LockConstant.REGISTER_EMAIL + email, List.of(
-                registerValidationHandler,
-                registerBizHandler,
-                // [事务] 数据持久化入库
+                // 参数校验
+                userAuthBiz::validateRegisterParam,
+                // 业务逻辑校验
+                userAuthBiz::processRegisterBiz,
+                // [事务]用户信息持久化并提交事务 -> 事务外核销验证码缓存
                 registerProcessHandler
         ));
         // [锁释放]
