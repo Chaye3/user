@@ -1,11 +1,15 @@
 package com.example.demo.service;
 
+import com.example.demo.biz.UserAuthBiz;
+import com.example.demo.constant.UserAuthConstant;
 import com.example.demo.dao.UserDao;
 import com.example.demo.dos.UserDO;
+import com.example.demo.enums.UserType;
+import com.example.demo.handler.auth.shared.EmailLockHandler;
 import com.example.demo.handler.create.BusinessValidationHandler;
 import com.example.demo.handler.create.ParameterValidationHandler;
 import com.example.demo.context.UserCreateContext;
-import com.example.demo.handler.create.UserPersistenceHandler;
+import com.example.demo.handler.create.UserProcessHandler;
 import com.example.demo.handler.auth.AuthChainExecutor;
 import com.example.demo.handler.auth.context.LoginContext;
 import com.example.demo.handler.auth.context.RegisterContext;
@@ -15,10 +19,6 @@ import com.example.demo.handler.auth.login.LoginValidationHandler;
 import com.example.demo.handler.auth.register.RegisterBizHandler;
 import com.example.demo.handler.auth.register.RegisterProcessHandler;
 import com.example.demo.handler.auth.register.RegisterValidationHandler;
-import com.example.demo.handler.auth.sendcode.SendCodeBizHandler;
-import com.example.demo.handler.auth.sendcode.SendCodePersistenceHandler;
-import com.example.demo.handler.auth.sendcode.SendCodeValidationHandler;
-import com.example.demo.handler.auth.shared.EmailLockHandler;
 import com.example.demo.exception.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class UserService {
     private BusinessValidationHandler businessValidationHandler;
 
     @Autowired
-    private UserPersistenceHandler userPersistenceHandler;
+    private UserProcessHandler userProcessHandler;
 
     @Autowired
     private AuthChainExecutor authChainExecutor;
@@ -51,13 +51,7 @@ public class UserService {
     private EmailLockHandler emailLockHandler;
 
     @Autowired
-    private SendCodeValidationHandler sendCodeValidationHandler;
-    
-    @Autowired
-    private SendCodeBizHandler sendCodeBizHandler;
-    
-    @Autowired
-    private SendCodePersistenceHandler sendCodePersistenceHandler;
+    private UserAuthBiz userAuthBiz;
 
     @Autowired
     private RegisterValidationHandler registerValidationHandler;
@@ -75,24 +69,45 @@ public class UserService {
     private LoginBizHandler loginBizHandler;
 
     /**
-     * 发送邮箱验证码 - Service 仅做流程编排，具体逻辑在责任链与 Biz 层
+     * 发送邮箱验证码 - 函数式责任链，使用 Lambda 表达式代替 Handler类 去处理不同的业务逻辑
+     *
+     * Lambda写法 安全警告：
+     * 1.lambda中捕获外部变量问题，会导致并发问题。要谨慎的只使用context中的变量。
+     * 2.使用context时的多线程安全问题：不要多个不同方法操作同一个context对象，每个方法都应该new一个新的context对象然后自己操作自己的context对象。
+     * 3.内存泄漏问题：lambda表达式中不要捕获外部大对象，否则lambda执行结束后，大对象也不会被GC，会导致内存泄漏。
+     * 4.状态无依赖：每个步骤都应该只依赖当前锁下面context中的状态，不要出现无锁状态依赖等情况。
      */
     public String sendRegisterCode(String email) {
         SendCodeContext context = new SendCodeContext();
         context.setEmail(email);
-
+        
+        // 使用 Lambda 表达式构建责任链，无需创建 Handler 类
         authChainExecutor.execute(context, List.of(
-                emailLockHandler,
-                sendCodeValidationHandler,
-                sendCodeBizHandler,
-                sendCodePersistenceHandler
+            // 步骤1: 获取锁
+            ctx -> ctx.setLock(userAuthBiz.acquireEmailLock(ctx.getEmail())),
+            
+            // 步骤2: 参数验证
+            ctx -> userAuthBiz.validateEmail(ctx.getEmail()),
+            
+            // 步骤3: 生成验证码
+            ctx -> {
+                String code = userAuthBiz.generateVerificationCode();
+                ctx.setMockCode(code);
+                ctx.setCodeExpireAt(System.currentTimeMillis() + UserAuthConstant.REGISTER_CODE_TTL_MILLIS);
+            },
+            
+            // 步骤4: 发送邮件
+            ctx -> userAuthBiz.mockSendRegisterMail(ctx.getEmail(), ctx.getMockCode()),
+            
+            // 步骤5: 持久化
+            ctx -> userAuthBiz.saveRegisterCode(ctx.getEmail(), ctx.getMockCode(), ctx.getCodeExpireAt())
         ));
-
+        
         return context.getMockCode();
     }
 
     /**
-     * 邮箱验证码注册 - Service 仅做流程编排，具体逻辑在责任链与 Biz 层
+     * 邮箱验证码注册 - 对象式责任链，创建多个handler对象去处理不同的业务逻辑
      */
     public UserDO registerByEmail(String username, String email, String password, String verificationCode) {
         RegisterContext context = new RegisterContext();
@@ -131,14 +146,17 @@ public class UserService {
     }
 
     /**
-     * 创建用户 - 使用责任链处理器
+     * 后台管理手动创建用户 - 使用责任链处理器
      */
-    public UserDO createUser(String username, String email, Integer age) {
-        UserCreateContext context = new UserCreateContext(username, email, age);
-        authChainExecutor.execute(context, List.<com.example.demo.handler.auth.AuthHandler<? super UserCreateContext>>of(
+    public UserDO createAdminUser(String username, String email, Integer age) {
+        UserCreateContext context = new UserCreateContext(username, email, age, UserType.PRIMARY);
+        authChainExecutor.execute(context, List.of(
+                // 参数校验
                 parameterValidationHandler,
+                // 业务逻辑校验
                 businessValidationHandler,
-                userPersistenceHandler
+                // 数据持久化入库
+                userProcessHandler
         ));
         return context.getResultUser();
     }

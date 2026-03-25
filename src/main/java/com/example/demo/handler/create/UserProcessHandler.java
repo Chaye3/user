@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 业务保存落库处理器 - 将用户数据持久化到存储
  */
 @Component
-public class UserPersistenceHandler implements UserCreateHandler {
+public class UserProcessHandler implements UserCreateHandler {
 
     @Autowired
     private UserDao userDao;

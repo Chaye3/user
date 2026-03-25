@@ -31,6 +31,7 @@ public class BusinessValidationHandler implements UserCreateHandler {
         if (strategy == null) {
             throw new IllegalStateException("不支持的业务策略：" + userType.getBusinessKey());
         }
+        // 策略模式：根据账户类别执行不同的校验逻辑
         strategy.validate(context);
     }
 }
